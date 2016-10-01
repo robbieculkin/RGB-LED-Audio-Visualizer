@@ -1,3 +1,7 @@
+//master.ino
+//Robbie Culkin
+//for the project found at https://robbieculkin.wordpress.com/2016/08/02/rgb-led-audio-visualizer/
+
 #include <Adafruit_NeoPixel.h>
 
 //Pins
@@ -208,6 +212,7 @@ double AutoMap(double vol)
   return map (vol, 0, 3*avg+1, 0, strip1.numPixels()/1.0);
 }
 
+//TODO eliminate this function using a position variable
 void ShiftArrayRight()
 {
   for (int i = 99; i >=1; i--) 
