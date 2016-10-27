@@ -2,7 +2,7 @@
 //Robbie Culkin
 //for the project found at https://robbieculkin.wordpress.com/2016/08/02/rgb-led-audio-visualizer/
 
-#include <Adafruit_NeoPixel.h>
+#include <Adafruit_NeoPixel.h> //https://github.com/adafruit/Adafruit_NeoPixel
 
 //Pins
 #define LED_PIN 3
