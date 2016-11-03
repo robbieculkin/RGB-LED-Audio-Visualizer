@@ -213,6 +213,7 @@ double AutoMap(double vol)
 }
 
 //TODO eliminate this function using a position variable
+//OR use a deque to store colors to improve efficiency
 void ShiftArrayRight()
 {
   for (int i = 99; i >=1; i--) 
