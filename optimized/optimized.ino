@@ -12,7 +12,8 @@
 #define LED_PIN 3
 #define LED_PIN2 9
 
-//SETTINGS
+//SETTINGS         
+#define BRIGHTNESS  150
 #define RISE_RATE   0.25      //(0 to 1) higher values mean livelier display
 #define FALL_RATE   0.10 
 #define CONTRAST   1.3
@@ -59,7 +60,32 @@ int numLoops = 0;
 
 
 void setup() {
-  // put your setup code here, to run once:
+  
+  //Spectrum Shield pin configurations
+  pinMode(STROBE, OUTPUT);
+  pinMode(RESET, OUTPUT);
+  pinMode(DC_ONE, INPUT);
+  pinMode(DC_TWO, INPUT);  
+  digitalWrite(STROBE, HIGH);
+  digitalWrite(RESET, HIGH);
+
+//Initialize Spectrum Analyzers
+  digitalWrite(STROBE, LOW);
+  delay(1);
+  digitalWrite(RESET, HIGH);
+  delay(1);
+  digitalWrite(STROBE, HIGH);
+  delay(1);
+  digitalWrite(STROBE, LOW);
+  delay(1);
+  digitalWrite(RESET, LOW);
+
+  strip1.begin();
+  strip1.setBrightness(BRIGHTNESS);
+  strip1.show();
+  tower.begin();
+  tower.setBrightness(BRIGHTNESS);
+  tower.show();
 
 }
 
