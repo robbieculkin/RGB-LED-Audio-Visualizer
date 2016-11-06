@@ -14,7 +14,7 @@
 
 //SETTINGS
 #define RISE_RATE   0.25      //(0 to 1) higher values mean livelier display
-#define FALL_RATE   0.1 
+#define FALL_RATE   0.10 
 #define CONTRAST   1.3
 #define MAX_VOL    600
 #define LIVELINESS  2
@@ -39,17 +39,15 @@ Adafruit_NeoPixel tower = Adafruit_NeoPixel(120, LED_PIN2, NEO_GRB + NEO_KHZ800)
     double autoMap(const double vol);
     // scales volume values in order to get consisitent output at different overall volumes
 
-// ASSIGN COLOR/BRIGHTNESS
+//DISPLAY
     void shiftColors();
     // makes room for a new color value
     uint32_t GetColor(byte pos, double vol);
     // finds the new color value based on color rotation position and volume
-    
-//DISPLAY
     void displayStrip(const double vol, Adafruit_NeoPixel &strip);
-    // sends RGB values to the strip
+    // detemines what LEDs are on/off; sends RGB values to the strip
     void disiplayTower(const double vol);
-    // sends RGB values to the tower
+    // detemines what LEDs are on/off; sends RGB values to the strip
 
 
 //GLOBALS (globals are normally a bad idea, but the nature of Arduino's loop() 
@@ -137,7 +135,6 @@ double smoothVol(double newVol)
       newVol = (newVol * RISE_RATE) + (oldVol * (1-RISE_RATE));
       // limit how quickly volume can rise from the last value
       
-      oldVol = newVol;
       return newVol;
   }
       
@@ -146,7 +143,6 @@ double smoothVol(double newVol)
       newVol = (newVol * FALL_RATE) + (oldVol * (1-FALL_RATE));
       // limit how quickly volume can fall from the last value
       
-      oldVol = newVol;
       return newVol;
   }
       
