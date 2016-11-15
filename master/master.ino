@@ -299,7 +299,7 @@ void displayTower(const double vol, Adafruit_NeoPixel &strip)
   {
     threshold = (((double)(i + 1) * MULTIPLIER) - 3 * myVol + 5) * LEVELS;
     // These magic numbers work
-    if (i % 2 == 0)                     // On a big 10 LED ring of tower
+    if (i % 2 == 1)                     // On a big 10 LED ring of tower
     {
       if (myVol > threshold)
       {
@@ -308,7 +308,7 @@ void displayTower(const double vol, Adafruit_NeoPixel &strip)
           strip.setPixelColor(findLED(i, j), color[j + i]);
         }
       }
-      else                              // on a smaller ring with 5 LEDs
+      else                              
       {
         for (j = 0; j < 10; j++)
         {
@@ -316,11 +316,10 @@ void displayTower(const double vol, Adafruit_NeoPixel &strip)
         }
       }
     }
-    else
+    else      //(i&2 == 0) on a smaller ring with 5 LEDs
     {
       if (myVol > threshold)
       {
-        // because the volume is > threshold
         for (j = 0; j < 5; j++)
         {
           strip.setPixelColor(findLED(i, j), color[(2 * j) + i]);
@@ -334,49 +333,9 @@ void displayTower(const double vol, Adafruit_NeoPixel &strip)
         }
       }
     }
-        strip.show();
   }
+  strip.show();
 }
-
-    //  for (i = 0; i < LEVELS; i += 2)
-    //  {
-    //    double threshold = (((double)(i + 1) * MULTIPLIER) - 3 * myVol + 5) * LEVELS;
-    //    //Serial.println(threshold);
-    //    if (myVol > threshold)              // want to illuminate the light,
-    //    { // because the volume is > threshold
-    //      for (j = 0; j < 5; j++)
-    //      {
-    //        strip.setPixelColor(findLED(i, j), color[(2 * j) + i]);
-    //      }
-    //    }
-    //    else
-    //    {
-    //      for (j = 0; j < 5; j++)
-    //      {
-    //        strip.setPixelColor(findLED(i, j), off);
-    //      }
-    //    }
-    //  }
-    //  for (i = 1; i < LEVELS; i += 2)
-    //  {
-    //    double threshold = (((double)(i + 1) * MULTIPLIER) - 3 * myVol + 5) * LEVELS;
-    //    if (myVol > threshold)
-    //    {
-    //      for (j = 0; j < 10; j++)
-    //      {
-    //        strip.setPixelColor(findLED(i, j), color[j + i]);
-    //      }
-    //    }
-    //    else
-    //    {
-    //      for (j = 0; j < 10; j++)
-    //      {
-    //        strip.setPixelColor(findLED(i, j), off);
-    //      }
-    //    }
-    //  }
-//    strip.show();
-//  }
 
   int findLED(int level, int place)
   {
