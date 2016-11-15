@@ -286,8 +286,8 @@ void displayTower(const double vol, Adafruit_NeoPixel &strip)
 {
   uint32_t off = strip.Color(0, 0, 0);
 
-  double myVol = 0.4*vol;
-  myVol = pow(myVol, LIVELINESS_T);
+  double myVol = 0.4*vol;            // don't want vol changes to stick outisde of this fcn
+  myVol = pow(myVol, LIVELINESS_T);  // larger values jump more
   
   int i, j;
   
