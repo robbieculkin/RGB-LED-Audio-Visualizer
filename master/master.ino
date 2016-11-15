@@ -58,9 +58,9 @@ Adafruit_NeoPixel tower  = Adafruit_NeoPixel(N_TOWER_LEDS, TOWER_PIN, NEO_GRB + 
 
 //GLOBALS (globals are normally a bad idea, but the nature of Arduino's loop() 
 //         function makes them necessary)
-double vols[100];
-uint32_t color [100];
-int numLoops = 0;
+double vols[100];           // last 100 volumes recorded
+uint32_t color [100];       // last 100 color values generated
+int numLoops = 0;           // number of loops executed so far 
 
 
 void setup() {
