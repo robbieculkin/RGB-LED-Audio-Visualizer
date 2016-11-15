@@ -15,7 +15,7 @@
 #define N_TOWER_LEDS   120
 #define LEVELS          16
 
-//SETTINGS         
+//SETTINGS
 #define BRIGHTNESS  150       //(0 to 255)
 #define RISE_RATE     0.25    //(0 to 1) higher values mean livelier display
 #define FALL_RATE     0.10    //(0 to 1) higher values mean livelier display
@@ -30,59 +30,59 @@ Adafruit_NeoPixel strip1 = Adafruit_NeoPixel(N_STRIP_LEDS, STRIP_PIN, NEO_GRB + 
 Adafruit_NeoPixel tower  = Adafruit_NeoPixel(N_TOWER_LEDS, TOWER_PIN, NEO_GRB + NEO_KHZ800);
 
 // READ
-    void recordFrequencies(int (&frequencies) [7]);
-    // records frequencies into the frequencies array
-    double getAvg(const int (&frequencies) [7]);
-    // returns avg of frequencies
-    
+void recordFrequencies(int (&frequencies) [7]);
+// records frequencies into the frequencies array
+double getAvg(const int (&frequencies) [7]);
+// returns avg of frequencies
+
 //FILTER
-    double smoothVol(double newVol);
-    // brings vol values closer together, resulting a smoother output (avoid strobing)
-    double autoMap(const double vol);
-    // scales volume values in order to get consisitent output at different overall volumes
+double smoothVol(double newVol);
+// brings vol values closer together, resulting a smoother output (avoid strobing)
+double autoMap(const double vol);
+// scales volume values in order to get consisitent output at different overall volumes
 
 //DISPLAY
-    void shiftColors();
-    // makes room for a new color value
-    uint32_t GetColor(byte pos, double vol);
-    // finds the new color value based on color rotation position and volume
-    void displayStrip(const double vol, Adafruit_NeoPixel &strip);
-    // detemines what LEDs are on/off; sends RGB values to the strip
-    void displayTower(const double vol, Adafruit_NeoPixel &strip);
-    // detemines what LEDs are on/off; sends RGB values to the strip
+void shiftColors();
+// makes room for a new color value
+uint32_t GetColor(byte pos, double vol);
+// finds the new color value based on color rotation position and volume
+void displayStrip(const double vol, Adafruit_NeoPixel &strip);
+// detemines what LEDs are on/off; sends RGB values to the strip
+void displayTower(const double vol, Adafruit_NeoPixel &strip);
+// detemines what LEDs are on/off; sends RGB values to the strip
 
 //HELPER FUNCTIONS
-    int findLED(int level, int place);
-    //returns the index of any LED on the tower given its level and position on the level
+int findLED(int level, int place);
+//returns the index of any LED on the tower given its level and position on the level
 
 
-//GLOBALS (globals are normally a bad idea, but the nature of Arduino's loop() 
+//GLOBALS (globals are normally a bad idea, but the nature of Arduino's loop()
 //         function makes them necessary)
 double vols[100];           // last 100 volumes recorded
 uint32_t color [100];       // last 100 color values generated
-int numLoops = 0;           // number of loops executed so far 
+int numLoops = 0;           // number of loops executed so far
 
 
 void setup() {
 
   //Set default values for arrays
-  for(int i = 0; i<100; i++)
+  for (int i = 0; i < 100; i++)
   {
     vols[i] = 100;   //if set to 0, display would flash on. this creates a slow opening
-    color[i]= strip1.Color(0, 0, 0);
+    color[i] = strip1.Color(0, 0, 0);
   }
 
   Serial.begin(9600);
-  
+
   //Spectrum Shield pin configurations
   pinMode(STROBE, OUTPUT);
   pinMode(RESET, OUTPUT);
   pinMode(DC_ONE, INPUT);
-  pinMode(DC_TWO, INPUT);  
+  pinMode(DC_TWO, INPUT);
   digitalWrite(STROBE, HIGH);
   digitalWrite(RESET, HIGH);
 
-//Initialize Spectrum Analyzers
+  //Initialize Spectrum Analyzers
   digitalWrite(STROBE, LOW);
   delay(1);
   digitalWrite(RESET, HIGH);
@@ -105,7 +105,7 @@ void loop() {
   int frequencies[7];
   double volume;
   static uint16_t pos = 0;
-  
+
   //
   // READ
   //
@@ -120,68 +120,68 @@ void loop() {
 
   //
   // DISPLAY
-  //  
+  //
   shiftColors();
   color[0] = GetColor(pos & 255, volume);
 
   //rotate the color assignment wheel
-  int rotation = map (volume, 0, strip1.numPixels()/2.0, 0, 25);
+  int rotation = map (volume, 0, strip1.numPixels() / 2.0, 0, 25);
   numLoops++;
-  if(numLoops%5 == 0) //default 5
-    pos+=rotation;
+  if (numLoops % 5 == 0) //default 5
+    pos += rotation;
 
   displayStrip(volume, strip1);
   displayTower(volume, tower);
-  
+
 }
 
 void recordFrequencies(int (&frequencies) [7])
 {
-    int band;
-    for (band = 0; band<7; band++)
-    {
-        frequencies[band] = ((analogRead(DC_ONE) + analogRead(DC_TWO))/2);
-        
-        if (frequencies[band] < 70) frequencies[band] = 0;
-        
-        //account for noise
-        digitalWrite(STROBE, HIGH);
-        digitalWrite(STROBE, LOW);
-    }
+  int band;
+  for (band = 0; band < 7; band++)
+  {
+    frequencies[band] = ((analogRead(DC_ONE) + analogRead(DC_TWO)) / 2);
+
+    if (frequencies[band] < 70) frequencies[band] = 0;
+
+    //account for noise
+    digitalWrite(STROBE, HIGH);
+    digitalWrite(STROBE, LOW);
+  }
 }
 
 double getAvg(const int (&frequencies)[7])
 {
   int total = 0;
-  
-  for(int k=0; k < 7; k++)
+
+  for (int k = 0; k < 7; k++)
   {
-    total+= frequencies[k];
+    total += frequencies[k];
   }
-  
-  return ((double)total/7);
+
+  return ((double)total / 7);
 }
 
 double smoothVol(double newVol)
 {
   double oldVol = vols[0];
-  
+
   if (oldVol < newVol)
   {
-      newVol = (newVol * RISE_RATE) + (oldVol * (1-RISE_RATE));
-      // limit how quickly volume can rise from the last value
-      
-      return newVol;
+    newVol = (newVol * RISE_RATE) + (oldVol * (1 - RISE_RATE));
+    // limit how quickly volume can rise from the last value
+
+    return newVol;
   }
-      
+
   else
   {
-      newVol = (newVol * FALL_RATE) + (oldVol * (1-FALL_RATE));
-      // limit how quickly volume can fall from the last value
-      
-      return newVol;
+    newVol = (newVol * FALL_RATE) + (oldVol * (1 - FALL_RATE));
+    // limit how quickly volume can fall from the last value
+
+    return newVol;
   }
-      
+
 }
 
 double autoMap(const double vol)
@@ -191,29 +191,29 @@ double autoMap(const double vol)
   static int prevMillis = 0;
 
   // this if statement acts like a delay, but without putting the entire sketch on hold
-  if(millis() - prevMillis > 100)
+  if (millis() - prevMillis > 100)
   {
-    for (int i = 100; i > 0; i--) 
+    for (int i = 100; i > 0; i--)
     {
-      total += vols[i-1];
-      vols[i] = vols[i-1]; 
+      total += vols[i - 1];
+      vols[i] = vols[i - 1];
     }
     vols[0] = vol;
-    
-    avg = total/100.0;
-    
+
+    avg = total / 100.0;
+
     prevMillis = millis();
   }
-  
+
   if (avg < 5) return 0;
-  return map (vol, 0, 3*avg+1, 0, strip1.numPixels()/1.0);
+  return map (vol, 0, 3 * avg + 1, 0, strip1.numPixels() / 1.0);
 }
 
 void shiftColors()
 {
-  for (int i = 99; i >=1; i--) 
+  for (int i = 99; i >= 1; i--)
   {
-     color[i] = color[i-1];
+    color[i] = color[i - 1];
   }
 }
 
@@ -225,26 +225,26 @@ uint32_t GetColor(byte pos, double vol) //returns color & brightness
   vol = pow(vol, CONTRAST);
   vol = map(vol, 0, MAX_VOL, 0, 255);
 
-if(vol >255) vol = 255;
-  
-  if(pos < 85) {
+  if (vol > 255) vol = 255;
+
+  if (pos < 85) {
     int red = 255 - pos * 3;
     int grn = 0;
     int blu = pos * 3;
-    return strip1.Color(vol*red/255, vol*grn/255, vol*blu/255);
+    return strip1.Color(vol * red / 255, vol * grn / 255, vol * blu / 255);
   }
-  if(pos < 170) {
+  if (pos < 170) {
     pos -= 85;
     int red = 0;
     int grn = pos * 3;
     int blu = 255 - pos * 3;
-    return strip1.Color(vol*red/255, vol*grn/255, vol*blu/255);
+    return strip1.Color(vol * red / 255, vol * grn / 255, vol * blu / 255);
   }
   pos -= 170;
   int red = pos * 3;
   int grn = 255 - pos * 3;
   int blu = 0;
-  return strip1.Color(vol*red/255, vol*grn/255, vol*blu/255);
+  return strip1.Color(vol * red / 255, vol * grn / 255, vol * blu / 255);
 }
 
 void displayStrip(const double vol, Adafruit_NeoPixel &strip)
@@ -252,31 +252,31 @@ void displayStrip(const double vol, Adafruit_NeoPixel &strip)
   uint32_t off = strip1.Color(0, 0, 0);
 
   // some last-minute transforms I dont want to stick in the main fcn
-  double newVol = 0.5*vol;
+  double newVol = 0.5 * vol;
   newVol = pow(newVol, LIVELINESS);
-  
+
   int i;
-  for (i = 0; i < strip.numPixels()/2; i++)
+  for (i = 0; i < strip.numPixels() / 2; i++)
   {
     // some magic numbers here that made the output better. should eventually get rid of them
-    int threshold = (int)((i+1) * MULTIPLIER - (3*newVol)+5);
-    
+    int threshold = (int)((i + 1) * MULTIPLIER - (3 * newVol) + 5);
+
     if (newVol > threshold)
     {
-      strip.setPixelColor(strip.numPixels()/2-1-i, color[i]);
+      strip.setPixelColor(strip.numPixels() / 2 - 1 - i, color[i]);
     }
     else
     {
-      strip.setPixelColor(strip.numPixels()/2-1-i, off);
+      strip.setPixelColor(strip.numPixels() / 2 - 1 - i, off);
     }
-    
+
     if (newVol > threshold)
     {
-      strip.setPixelColor(strip.numPixels()/2-1+i, color[i]);
+      strip.setPixelColor(strip.numPixels() / 2 - 1 + i, color[i]);
     }
     else
     {
-      strip.setPixelColor(strip.numPixels()/2-1+i, off);
+      strip.setPixelColor(strip.numPixels() / 2 - 1 + i, off);
     }
   }
   strip.show();
@@ -286,77 +286,117 @@ void displayTower(const double vol, Adafruit_NeoPixel &strip)
 {
   uint32_t off = strip.Color(0, 0, 0);
 
-<<<<<<< HEAD
-  double myVol = 0.4*vol;
-  myVol = pow(myVol, LIVELINESS_T);     //uses power function to scale volumes, 
-                                        //making large volumes have greater 
-                                        //visual effect
-=======
-  double myVol = 0.4*vol;            // don't want vol changes to stick outisde of this fcn
-  myVol = pow(myVol, LIVELINESS_T);  // larger values jump more
->>>>>>> origin/master
-  
+  double myVol = 0.4 * vol;
+  myVol = pow(myVol, LIVELINESS_T);     
+  //uses power function to scale volumes,
+  //making large volumes have greater
+  //visual effect
+
   int i, j;
-  
-  for (i=0; i < LEVELS; i+=2)
+
+  double threshold;
+  for (int i = 0;  i < LEVELS; i++)
   {
-    double threshold = (((double)(i+1)*MULTIPLIER)-3*myVol+5)*LEVELS;
-    //Serial.println(threshold);
-    if(myVol > threshold)
+    threshold = (((double)(i + 1) * MULTIPLIER) - 3 * myVol + 5) * LEVELS;
+    // These magic numbers work
+    if (i % 2 == 0)                     // On a big 10 LED ring of tower
     {
-      for (j=0; j < 5; j++)
+      if (myVol > threshold)
       {
-        strip.setPixelColor(findLED(i, j), color[2*j+i]);
+        for (j = 0; j < 10; j++)
+        {
+          strip.setPixelColor(findLED(i, j), color[j + i]);
+        }
+      }
+      else                              // on a smaller ring with 5 LEDs
+      {
+        for (j = 0; j < 10; j++)
+        {
+          strip.setPixelColor(findLED(i, j), off);
+        }
       }
     }
     else
     {
-      for (j=0; j < 5; j++)
+      if (myVol > threshold)
       {
-        strip.setPixelColor(findLED(i, j), off);
+        // because the volume is > threshold
+        for (j = 0; j < 5; j++)
+        {
+          strip.setPixelColor(findLED(i, j), color[(2 * j) + i]);
+        }
+      }
+      else
+      {
+        for (j = 0; j < 5; j++)
+        {
+          strip.setPixelColor(findLED(i, j), off);
+        }
       }
     }
+        strip.show();
   }
-  for (i=1; i < LEVELS; i+=2)
-  {
-    double threshold = (((double)(i+1)*MULTIPLIER)-3*myVol+5)*LEVELS;
-    if(myVol > threshold)
-    {
-      for (j=0; j < 10; j++)
-      {
-        strip.setPixelColor(findLED(i, j), color[j+i]);
-      }
-    }
-    else
-    {
-      for (j=0; j < 10; j++)
-      {
-        strip.setPixelColor(findLED(i, j), off);
-      }
-    }
-  }
-  strip.show();
 }
 
-int findLED(int level, int place)
-{
-  int i, total = 0;
-  for(i=0; i < level; i++)
-  {
-    if(i%2 == 0)
-    {
-      total += 5;
-    }
-    else
-    {
-      total += 10;
-    }
-  }
-  if (level%2 == 0 && place > 4)
-  {
-    place = 4;
-  }
-  total += place;
+    //  for (i = 0; i < LEVELS; i += 2)
+    //  {
+    //    double threshold = (((double)(i + 1) * MULTIPLIER) - 3 * myVol + 5) * LEVELS;
+    //    //Serial.println(threshold);
+    //    if (myVol > threshold)              // want to illuminate the light,
+    //    { // because the volume is > threshold
+    //      for (j = 0; j < 5; j++)
+    //      {
+    //        strip.setPixelColor(findLED(i, j), color[(2 * j) + i]);
+    //      }
+    //    }
+    //    else
+    //    {
+    //      for (j = 0; j < 5; j++)
+    //      {
+    //        strip.setPixelColor(findLED(i, j), off);
+    //      }
+    //    }
+    //  }
+    //  for (i = 1; i < LEVELS; i += 2)
+    //  {
+    //    double threshold = (((double)(i + 1) * MULTIPLIER) - 3 * myVol + 5) * LEVELS;
+    //    if (myVol > threshold)
+    //    {
+    //      for (j = 0; j < 10; j++)
+    //      {
+    //        strip.setPixelColor(findLED(i, j), color[j + i]);
+    //      }
+    //    }
+    //    else
+    //    {
+    //      for (j = 0; j < 10; j++)
+    //      {
+    //        strip.setPixelColor(findLED(i, j), off);
+    //      }
+    //    }
+    //  }
+//    strip.show();
+//  }
 
-  return total;
-}
+  int findLED(int level, int place)
+  {
+    int i, total = 0;
+    for (i = 0; i < level; i++)
+    {
+      if (i % 2 == 0)
+      {
+        total += 5;
+      }
+      else
+      {
+        total += 10;
+      }
+    }
+    if (level % 2 == 0 && place > 4)
+    {
+      place = 4;
+    }
+    total += place;
+
+    return total;
+  }
