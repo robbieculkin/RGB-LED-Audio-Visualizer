@@ -286,16 +286,11 @@ void displayTower(const double vol, Adafruit_NeoPixel &strip)
 {
   uint32_t off = strip.Color(0, 0, 0);
 
-<<<<<<< HEAD
   double myVol = 0.4*vol;
   myVol = pow(myVol, LIVELINESS_T);     //uses power function to scale volumes, 
                                         //making large volumes have greater 
                                         //visual effect
-=======
-  double myVol = 0.4*vol;            // don't want vol changes to stick outisde of this fcn
-  myVol = pow(myVol, LIVELINESS_T);  // larger values jump more
->>>>>>> origin/master
-  
+ 
   int i, j;
   
   for (i=0; i < LEVELS; i+=2)
