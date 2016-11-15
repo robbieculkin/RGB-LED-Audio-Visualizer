@@ -1,5 +1,5 @@
 //master.ino
-//Robbie Culkin and Daniel Barkhorn, again, again
+//Robbie Culkin & Daniel Barkhorn
 //for the project found at https://robbieculkin.wordpress.com/2016/08/02/rgb-led-audio-visualizer/
 
 #include <Adafruit_NeoPixel.h> //https://github.com/adafruit/Adafruit_NeoPixel
@@ -12,18 +12,18 @@
 #define STRIP_PIN        3
 #define N_STRIP_LEDS   180
 #define TOWER_PIN        9
-#define N_TOWER_LEDS   180
+#define N_TOWER_LEDS   120
 #define LEVELS          16
 
 //SETTINGS         
 #define BRIGHTNESS  150       //(0 to 255)
-#define RISE_RATE   0.25      //(0 to 1) higher values mean livelier display
-#define FALL_RATE   0.10      //(0 to 1) higher values mean livelier display
-#define CONTRAST   1.3        //(undefined range)
-#define MAX_VOL    600        //(0 to 1023) maximum value reading expected from the shield
-#define LIVELINESS  2         //(undefined range)
-#define LIVELINESS2 1.7
-#define MULTIPLIER 90         //(undefined range) higher values mean fewer LEDs lit @ a given volume
+#define RISE_RATE     0.25    //(0 to 1) higher values mean livelier display
+#define FALL_RATE     0.10    //(0 to 1) higher values mean livelier display
+#define CONTRAST      1.3     //(undefined range)
+#define MAX_VOL     600       //(0 to 1023) maximum value reading expected from the shield
+#define LIVELINESS    2       //(undefined range)
+#define LIVELINESS_T  1.7     //(undefined range)
+#define MULTIPLIER   90       //(undefined range) higher values mean fewer LEDs lit @ a given volume
 
 //NeoPixel intitialization
 Adafruit_NeoPixel strip1 = Adafruit_NeoPixel(N_STRIP_LEDS, STRIP_PIN, NEO_GRB + NEO_KHZ800);
@@ -48,7 +48,7 @@ Adafruit_NeoPixel tower  = Adafruit_NeoPixel(N_TOWER_LEDS, TOWER_PIN, NEO_GRB + 
     // finds the new color value based on color rotation position and volume
     void displayStrip(const double vol, Adafruit_NeoPixel &strip);
     // detemines what LEDs are on/off; sends RGB values to the strip
-    void disiplayTower(const double vol, Adafruit_NeoPixel &strip);
+    void displayTower(const double vol, Adafruit_NeoPixel &strip);
     // detemines what LEDs are on/off; sends RGB values to the strip
 
 //HELPER FUNCTIONS
@@ -60,11 +60,19 @@ Adafruit_NeoPixel tower  = Adafruit_NeoPixel(N_TOWER_LEDS, TOWER_PIN, NEO_GRB + 
 //         function makes them necessary)
 double vols[100];
 uint32_t color [100];
-uint32_t colorCursor = 0;
 int numLoops = 0;
 
 
 void setup() {
+
+  //Set default values for arrays
+  for(int i = 0; i<100; i++)
+  {
+    vols[i] = 100;   //if set to 0, display would flash on. this creates a slow opening
+    color[i]= strip1.Color(0, 0, 0);
+  }
+
+  Serial.begin(9600);
   
   //Spectrum Shield pin configurations
   pinMode(STROBE, OUTPUT);
@@ -91,7 +99,6 @@ void setup() {
   tower.begin();
   tower.setBrightness(BRIGHTNESS);
   tower.show();
-
 }
 
 void loop() {
@@ -112,10 +119,10 @@ void loop() {
   volume = autoMap(volume);
 
   //
-  // ASSIGN COLOR/BRIGHTNESS
-  //
+  // DISPLAY
+  //  
   shiftColors();
-  color[colorCursor] = GetColor(pos & 255, volume);
+  color[0] = GetColor(pos & 255, volume);
 
   //rotate the color assignment wheel
   int rotation = map (volume, 0, strip1.numPixels()/2.0, 0, 25);
@@ -123,11 +130,8 @@ void loop() {
   if(numLoops%5 == 0) //default 5
     pos+=rotation;
 
-  //
-  // DISPLAY
-  //  
   displayStrip(volume, strip1);
-  disiplayTower(volume, tower);
+  displayTower(volume, tower);
   
 }
 
@@ -252,11 +256,11 @@ void displayStrip(const double vol, Adafruit_NeoPixel &strip)
   newVol = pow(newVol, LIVELINESS);
   
   int i;
-  for (i = 0; i < strip.numPixels(); i++)
+  for (i = 0; i < strip.numPixels()/2; i++)
   {
     // some magic numbers here that made the output better. should eventually get rid of them
-    double threshold = ((double)(i+1) * MULTIPLIER - (3*newVol)+5);
-     
+    int threshold = (int)((i+1) * MULTIPLIER - (3*newVol)+5);
+    
     if (newVol > threshold)
     {
       strip.setPixelColor(strip.numPixels()/2-1-i, color[i]);
@@ -278,17 +282,19 @@ void displayStrip(const double vol, Adafruit_NeoPixel &strip)
   strip.show();
 }
 
-void disiplayTower(const double vol, Adafruit_NeoPixel &strip)
+void displayTower(const double vol, Adafruit_NeoPixel &strip)
 {
-  uint32_t off = strip1.Color(0, 0, 0);
+  uint32_t off = strip.Color(0, 0, 0);
 
   double myVol = 0.4*vol;
-  myVol = pow(myVol, LIVELINESS2);
+  myVol = pow(myVol, LIVELINESS_T);
   
   int i, j;
+  
   for (i=0; i < LEVELS; i+=2)
   {
-    double threshold = (((double)(i+1)*MULTIPLIER)-3*myVol+5)*14;
+    double threshold = (((double)(i+1)*MULTIPLIER)-3*myVol+5)*LEVELS;
+    //Serial.println(threshold);
     if(myVol > threshold)
     {
       for (j=0; j < 5; j++)
@@ -306,8 +312,8 @@ void disiplayTower(const double vol, Adafruit_NeoPixel &strip)
   }
   for (i=1; i < LEVELS; i+=2)
   {
-    double threshold = (((double)(i+1)*MULTIPLIER)-3*myVol+5)*14;
-    if(vol > threshold)
+    double threshold = (((double)(i+1)*MULTIPLIER)-3*myVol+5)*LEVELS;
+    if(myVol > threshold)
     {
       for (j=0; j < 10; j++)
       {
