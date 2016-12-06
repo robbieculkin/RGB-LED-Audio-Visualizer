@@ -2,9 +2,12 @@
 //Robbie Culkin & Daniel Barkhorn
 //for the project found at https://robbieculkin.wordpress.com/2016/08/02/rgb-led-audio-visualizer/
 
+#include <SoftwareSerial.h>
 #include <Adafruit_NeoPixel.h> //https://github.com/adafruit/Adafruit_NeoPixel
 
 // PINS & INFO
+#define BT_TX           A9
+#define BT_RX           A8
 #define STROBE           4
 #define RESET            6
 #define DC_ONE          A1
@@ -25,9 +28,10 @@
 #define LIVELINESS_T  1.7     //(undefined range)
 #define MULTIPLIER   90       //(undefined range) higher values mean fewer LEDs lit @ a given volume
 
-//NeoPixel intitialization
+//NeoPixel & Bluetooth intitialization
 Adafruit_NeoPixel strip1 = Adafruit_NeoPixel(N_STRIP_LEDS, STRIP_PIN, NEO_GRB + NEO_KHZ800);
 Adafruit_NeoPixel tower  = Adafruit_NeoPixel(N_TOWER_LEDS, TOWER_PIN, NEO_GRB + NEO_KHZ800);
+SoftwareSerial BT_Board(BT_TX, BT_RX);    //TX, RX
 
 // READ
 void recordFrequencies(int (&frequencies) [7]);
@@ -73,6 +77,7 @@ void setup() {
   }
 
   Serial.begin(9600);
+  BT_Board.begin(9600);
 
   //Spectrum Shield pin configurations
   pinMode(STROBE, OUTPUT);
@@ -106,6 +111,10 @@ void loop() {
   double volume;
   static uint16_t pos = 0;
 
+
+  if (BT_Board.available())
+    Serial.write(BT_Board.read());
+    
   //
   // READ
   //
@@ -121,7 +130,7 @@ void loop() {
   //
   // DISPLAY
   //
-  shiftColors();
+  shiftColors(); // TODO: circular array. Shifts inefficient
   color[0] = GetColor(pos & 255, volume);
 
   //rotate the color assignment wheel
