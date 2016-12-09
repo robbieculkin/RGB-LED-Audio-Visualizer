@@ -20,8 +20,8 @@
 
 //SETTINGS
 #define BRIGHTNESS  150       //(0 to 255)
-#define RISE_RATE     0.25    //(0 to 1) higher values mean livelier display
-#define FALL_RATE     0.10    //(0 to 1) higher values mean livelier display
+#define RISE_RATE     0.15    //(0 to 1) higher values mean livelier display
+#define FALL_RATE     0.05    //(0 to 1) higher values mean livelier display
 #define CONTRAST      1.3     //(undefined range)
 #define MAX_VOL     600       //(0 to 1023) maximum value reading expected from the shield
 #define LIVELINESS    2       //(undefined range)
