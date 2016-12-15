@@ -359,3 +359,34 @@ void displayTower(const double vol, Adafruit_NeoPixel &strip)
 
     return total;
   }
+
+  // Function to interpret Bluetooth input
+  // Preconditions: Bluetooth signal has been successfully recieved as string
+  // Postconditinos: Appropriate variables have been changed (?)
+  void bluetoothInput(String s)
+  {
+    if(s[0] == 'C')   // Changing contrast value
+    {
+      // Change contrast
+      return;
+    }
+    if(s[0] == 'R')  
+    {
+      // Change red intensity
+      return;
+    }
+    if(s[0] == 'G')
+    {
+      // Change green intensity
+      return;
+    }
+    if(s[0] == 'B')
+    {
+      // Change blue intensity
+      return;
+    }
+  }
+  // Note: I added a contrast slider on the iOS app just because I thought it might be
+  // cool but you have more knowledge of what altering that variable would actually do. 
+  // Maybe we could allow it to alter brightness? Or we can keep it RGB, just messing
+  // around really.
