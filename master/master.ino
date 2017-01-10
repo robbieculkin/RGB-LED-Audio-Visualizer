@@ -386,7 +386,4 @@ void displayTower(const double vol, Adafruit_NeoPixel &strip)
       return;
     }
   }
-  // Note: I added a contrast slider on the iOS app just because I thought it might be
-  // cool but you have more knowledge of what altering that variable would actually do. 
-  // Maybe we could allow it to alter brightness? Or we can keep it RGB, just messing
-  // around really.
+  
