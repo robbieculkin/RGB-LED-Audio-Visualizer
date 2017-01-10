@@ -362,7 +362,7 @@ void displayTower(const double vol, Adafruit_NeoPixel &strip)
 
   // Function to interpret Bluetooth input
   // Preconditions: Bluetooth signal has been successfully recieved as string
-  // Postconditinos: Appropriate variables have been changed (?)
+  // Postconditions: Appropriate variables have been changed (?)
   void bluetoothInput(String s)
   {
     if(s[0] == 'C')   // Changing contrast value
