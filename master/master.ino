@@ -61,6 +61,10 @@ int findLED(int level, int place);
 double vols[100];           // last 100 volumes recorded
 uint32_t color [100];       // last 100 color values generated
 int numLoops = 0;           // number of loops executed so far
+double redMult = 1.0;       // changed by BT
+double grnMult = 1.0;       // changed by BT
+double bluMult = 1.0;       // changed by BT
+
 
 
 void setup() {
