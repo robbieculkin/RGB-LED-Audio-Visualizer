@@ -381,8 +381,8 @@ void displayTower(const double vol, Adafruit_NeoPixel &strip)
     if(s[0] == 'C')   // Changing contrast value
     {
       redMult*=(int)s.substring(1);
-      greenMult*=(int)s.substring(1);
-      blueMult*=(int)s.substring(1);
+      grnMult*=(int)s.substring(1);
+      bluMult*=(int)s.substring(1);
       return;
     }
     if(s[0] == 'R')  
