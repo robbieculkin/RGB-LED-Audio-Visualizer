@@ -58,7 +58,7 @@ void displayTower(const double vol, Adafruit_NeoPixel &strip);
 //HELPER FUNCTIONS
 int findLED(int level, int place);
 //returns the index of any LED on the tower given its level and position on the level
-
+void bluetoothInput();
 
 //GLOBALS (globals are normally a bad idea, but the nature of Arduino's loop()
 //         function makes them necessary)
@@ -68,8 +68,6 @@ int numLoops = 0;           // number of loops executed so far
 double redMult = 1.0;       // changed by BT
 double grnMult = 1.0;       // changed by BT
 double bluMult = 1.0;       // changed by BT
-
-
 
 void setup() {
 
@@ -117,7 +115,7 @@ void loop() {
 
 
   if (BT_Board.available())
-    Serial.write(BT_Board.read());
+    bluetoothInput();
     
   //
   // READ
@@ -244,20 +242,20 @@ uint32_t GetColor(byte pos, double vol) //returns color & brightness
     int red = 255 - pos * 3;
     int grn = 0;
     int blu = pos * 3;
-    return strip1.Color(vol * red / 255, vol * grn / 255, vol * blu / 255);
+    return strip1.Color(vol * red * redMult / 255, vol * grn * grnMult / 255, vol * blu * bluMult / 255);
   }
   if (pos < 170) {
     pos -= 85;
     int red = 0;
     int grn = pos * 3;
     int blu = 255 - pos * 3;
-    return strip1.Color(vol * red / 255, vol * grn / 255, vol * blu / 255);
+    return strip1.Color(vol * red * redMult / 255, vol * grn * grnMult / 255, vol * blu * bluMult / 255);
   }
   pos -= 170;
   int red = pos * 3;
   int grn = 255 - pos * 3;
   int blu = 0;
-  return strip1.Color(vol * red / 255, vol * grn / 255, vol * blu / 255);
+  return strip1.Color(vol * red * redMult / 255, vol * grn * grnMult / 255, vol * blu * bluMult / 255);
 }
 
 void displayStrip(const double vol, Adafruit_NeoPixel &strip)
@@ -376,29 +374,42 @@ void displayTower(const double vol, Adafruit_NeoPixel &strip)
   // Function to interpret Bluetooth input
   // Preconditions: Bluetooth signal has been successfully recieved as string
   // Postconditions: Appropriate variables have been changed (?)
-  void bluetoothInput(String s)
+  void bluetoothInput()
   {
-    if(s[0] == 'C')   // Changing contrast value
+    char color = BT_Board.read();
+    double value = 0;
+    
+    if(color == 'R' || color == 'B' || color == 'G' || color == 'C')
     {
-      redMult*=(int)s.substring(1);
-      grnMult*=(int)s.substring(1);
-      bluMult*=(int)s.substring(1);
-      return;
+      
+      uint8_t tens = BT_Board.read() - '0';
+      uint8_t ones = BT_Board.read() - '0';
+      
+      if (ones > 9)
+      {
+        ones = tens;
+        tens = 0;
+      }
+
+      value += 10 * tens;
+      value += ones;
+
+      if(value > 99)
+        return;
+  
+      value = value/100.0;
     }
-    if(s[0] == 'R')  
+
+    switch (color)
     {
-      redMult = (int)s.substring(1);  
-      return;
-    }
-    if(s[0] == 'G')
-    {
-      grnMult = (int)s.substring(1);
-      return;
-    }
-    if(s[0] == 'B')
-    {
-      bluMult = (int)s.substring(1);
-      return;
+      case 'R' : redMult = value;
+                 break;
+      case 'G' : grnMult = value;
+                 break;
+      case 'B' : bluMult = value;
+                 break;
+      case 'C' : redMult = value;
+                 break;
     }
   }
   
