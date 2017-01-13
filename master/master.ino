@@ -68,6 +68,7 @@ int numLoops = 0;           // number of loops executed so far
 double redMult = 1.0;       // changed by BT
 double grnMult = 1.0;       // changed by BT
 double bluMult = 1.0;       // changed by BT
+double brtMult = 1.0;
 
 void setup() {
 
@@ -230,6 +231,10 @@ void shiftColors()
 
 uint32_t GetColor(byte pos, double vol) //returns color & brightness
 {
+  double myRedMult = redMult * brtMult;
+  double myGrnMult = grnMult * brtMult;
+  double myBluMult = bluMult * brtMult;
+  
   pos = 255 - pos;
 
   // some last-minute transforms I dont want to stick in the main fcn
@@ -242,20 +247,20 @@ uint32_t GetColor(byte pos, double vol) //returns color & brightness
     int red = 255 - pos * 3;
     int grn = 0;
     int blu = pos * 3;
-    return strip1.Color(vol * red * redMult / 255, vol * grn * grnMult / 255, vol * blu * bluMult / 255);
+    return strip1.Color(vol * red * myRedMult / 255, vol * grn * myGrnMult / 255, vol * blu * myBluMult / 255);
   }
   if (pos < 170) {
     pos -= 85;
     int red = 0;
     int grn = pos * 3;
     int blu = 255 - pos * 3;
-    return strip1.Color(vol * red * redMult / 255, vol * grn * grnMult / 255, vol * blu * bluMult / 255);
+    return strip1.Color(vol * red * myRedMult / 255, vol * grn * myGrnMult / 255, vol * blu * myBluMult / 255);
   }
   pos -= 170;
   int red = pos * 3;
   int grn = 255 - pos * 3;
   int blu = 0;
-  return strip1.Color(vol * red * redMult / 255, vol * grn * grnMult / 255, vol * blu * bluMult / 255);
+  return strip1.Color(vol * red * myRedMult / 255, vol * grn * myGrnMult / 255, vol * blu * myBluMult / 255);
 }
 
 void displayStrip(const double vol, Adafruit_NeoPixel &strip)
@@ -408,7 +413,7 @@ void displayTower(const double vol, Adafruit_NeoPixel &strip)
                  break;
       case 'B' : bluMult = value;
                  break;
-      case 'C' : redMult = value;
+      case 'C' : brtMult = value;
                  break;
     }
   }
