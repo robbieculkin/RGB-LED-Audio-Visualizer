@@ -4,6 +4,7 @@
 
 #include <SoftwareSerial.h>
 #include <Adafruit_NeoPixel.h> //https://github.com/adafruit/Adafruit_NeoPixel
+#include "visualizer.h"
 
 // PINS & INFO
 #define BT_TX           A9
@@ -20,8 +21,8 @@
 
 //SETTINGS
 #define BRIGHTNESS  150       //(0 to 255)
-#define RISE_RATE     0.15    //(0 to 1) higher values mean livelier display
-#define FALL_RATE     0.05    //(0 to 1) higher values mean livelier display
+#define RISE_RATE     0.13    //(0 to 1) higher values mean livelier display
+#define FALL_RATE     0.04    //(0 to 1) higher values mean livelier display
 #define CONTRAST      1.3     //(undefined range)
 #define MAX_VOL     600       //(0 to 1023) maximum value reading expected from the shield
 #define LIVELINESS    2       //(undefined range)
@@ -62,21 +63,24 @@ void bluetoothInput();
 
 //GLOBALS (globals are normally a bad idea, but the nature of Arduino's loop()
 //         function makes them necessary)
-double vols[100];           // last 100 volumes recorded
-uint32_t color [100];       // last 100 color values generated
+circularArray<double> vols = circularArray<double>(100);          // last 100 volumes recorded
+circularArray<uint32_t> color = circularArray<uint32_t>(100);       // last 100 color values generated
 int numLoops = 0;           // number of loops executed so far
 double redMult = 1.0;       // changed by BT
 double grnMult = 1.0;       // changed by BT
 double bluMult = 1.0;       // changed by BT
 double brtMult = 1.0;
+bool grnOn = true;
+bool bluOn = true;
+bool redOn = true;
 
 void setup() {
 
   //Set default values for arrays
   for (int i = 0; i < 100; i++)
   {
-    vols[i] = 100;   //if set to 0, display would flash on. this creates a slow opening
-    color[i] = strip1.Color(0, 0, 0);
+    vols.addToFront(100);   //if set to 0, display would flash on. this creates a slow opening
+    color.addToFront(strip1.Color(0, 0, 0));
   }
 
   Serial.begin(9600);
@@ -133,8 +137,7 @@ void loop() {
   //
   // DISPLAY
   //
-  shiftColors(); // TODO: circular array. Shifts inefficient
-  color[0] = GetColor(pos & 255, volume);
+  color.addToFront(GetColor(pos & 255, volume));
 
   //rotate the color assignment wheel
   int rotation = map (volume, 0, strip1.numPixels() / 2.0, 0, 25);
@@ -208,9 +211,8 @@ double autoMap(const double vol)
     for (int i = 100; i > 0; i--)
     {
       total += vols[i - 1];
-      vols[i] = vols[i - 1];
     }
-    vols[0] = vol;
+    vols.addToFront(vol);
 
     avg = total / 100.0;
 
@@ -219,14 +221,6 @@ double autoMap(const double vol)
 
   if (avg < 5) return 0;
   return map (vol, 0, 3 * avg + 1, 0, strip1.numPixels() / 1.0);
-}
-
-void shiftColors()
-{
-  for (int i = 99; i >= 1; i--)
-  {
-    color[i] = color[i - 1];
-  }
 }
 
 uint32_t GetColor(byte pos, double vol) //returns color & brightness
@@ -243,24 +237,75 @@ uint32_t GetColor(byte pos, double vol) //returns color & brightness
 
   if (vol > 255) vol = 255;
 
-  if (pos < 85) {
-    int red = 255 - pos * 3;
-    int grn = 0;
-    int blu = pos * 3;
+  // All 3 colors on
+  if (redOn && grnOn && bluOn)
+  {
+    if (pos < 85) {
+      int red = 255 - pos * 3;
+      int grn = 0;
+      int blu = pos * 3;
+      return strip1.Color(vol * red * myRedMult / 255, vol * grn * myGrnMult / 255, vol * blu * myBluMult / 255);
+    }
+    if (pos < 170) {
+      pos -= 85;
+      int red = 0;
+      int grn = pos * 3;
+      int blu = 255 - pos * 3;
+      return strip1.Color(vol * red * myRedMult / 255, vol * grn * myGrnMult / 255, vol * blu * myBluMult / 255);
+    }
+    pos -= 170;
+    int red = pos * 3;
+    int grn = 255 - pos * 3;
+    int blu = 0;
     return strip1.Color(vol * red * myRedMult / 255, vol * grn * myGrnMult / 255, vol * blu * myBluMult / 255);
   }
-  if (pos < 170) {
-    pos -= 85;
-    int red = 0;
-    int grn = pos * 3;
-    int blu = 255 - pos * 3;
-    return strip1.Color(vol * red * myRedMult / 255, vol * grn * myGrnMult / 255, vol * blu * myBluMult / 255);
+
+  // Two colors on
+  else if ((redOn && grnOn) || (grnOn && bluOn) || (redOn && bluOn))
+  {
+    int color1 = 0;
+    int color2 = 0;
+    if (pos < 127) {
+      color1 = 255 - pos * 2;
+      color2 = pos * 2;
+    }
+    else {
+      pos -= 127;
+      color1 = pos * 2;
+      color2 = 255 - pos * 2;
+    }
+
+    if (redOn && grnOn)
+    {
+      return strip1.Color(vol * color1 * myRedMult / 255, vol * color2 * myGrnMult / 255, 0);
+    }
+    else if (grnOn && bluOn)
+    {
+      return strip1.Color(0, vol * color1 * myGrnMult / 255, vol * color2 * myBluMult / 255);
+    }
+    else if (redOn && bluOn)
+    {
+      return strip1.Color(vol * color1 * myRedMult / 255, 0, vol * color2 * myBluMult / 255);
+    }
   }
-  pos -= 170;
-  int red = pos * 3;
-  int grn = 255 - pos * 3;
-  int blu = 0;
-  return strip1.Color(vol * red * myRedMult / 255, vol * grn * myGrnMult / 255, vol * blu * myBluMult / 255);
+
+  // Only one color on
+  else if (redOn)
+  {
+    return strip1.Color(vol * 255 * myRedMult / 255, 0, 0);
+  }
+  else if (grnOn)
+  {
+    return strip1.Color(0, vol * 255 * myGrnMult / 255, 0);
+  }
+  else if (bluOn)
+  {
+    return strip1.Color(0, 0, vol * 255 * myBluMult / 255);
+  }
+
+  // All colors off
+  else
+    return strip1.Color(0, 0, 0);
 }
 
 void displayStrip(const double vol, Adafruit_NeoPixel &strip)
@@ -353,59 +398,85 @@ void displayTower(const double vol, Adafruit_NeoPixel &strip)
   strip.show();
 }
 
-  int findLED(int level, int place)
+int findLED(int level, int place)
+{
+  int i, total = 0;
+  for (i = 0; i < level; i++)
   {
-    int i, total = 0;
-    for (i = 0; i < level; i++)
+    if (i % 2 == 0)
     {
-      if (i % 2 == 0)
-      {
-        total += 5;
-      }
-      else
-      {
-        total += 10;
-      }
+      total += 5;
     }
-    if (level % 2 == 0 && place > 4)
+    else
     {
-      place = 4;
+      total += 10;
     }
-    total += place;
+  }
+  if (level % 2 == 0 && place > 4)
+  {
+    place = 4;
+  }
+  total += place;
 
-    return total;
+  return total;
+}
+
+// Function to interpret Bluetooth input
+// Preconditions: Bluetooth signal has been successfully recieved as string
+// Postconditions: Appropriate variables have been changed (?)
+void bluetoothInput()
+{
+  char label = BT_Board.read();
+  char in1;
+  char in2;
+  double value = 0;
+
+  if (isalpha(label))
+  {
+    in1 = BT_Board.read();
+    in2 = BT_Board.read();
+    uint8_t tens = in1 - '0';
+    uint8_t ones = in2 - '0';
+    
+    if (ones > 9)
+    {
+      ones = tens;
+      tens = 0;
+    }
+
+    value += 10 * tens;
+    value += ones;
+
+    if(value > 99)
+      return;
   }
 
-  // Function to interpret Bluetooth input
-  // Preconditions: Bluetooth signal has been successfully recieved as string
-  // Postconditions: Appropriate variables have been changed (?)
-  void bluetoothInput()
+  // Color on/off switches
+  if(label == 'r')
   {
-    char color = BT_Board.read();
-    double value = 0;
-    
-    if(color == 'R' || color == 'B' || color == 'G' || color == 'C')
-    {
-      
-      uint8_t tens = BT_Board.read() - '0';
-      uint8_t ones = BT_Board.read() - '0';
-      
-      if (ones > 9)
-      {
-        ones = tens;
-        tens = 0;
-      }
+    redOn = (value == 1);
+  }
+  if(label == 'g')
+  {
+    grnOn = (value == 1);
+  }
+  if(label == 'b')
+  {
+    bluOn = (value == 1);
+  }
+  if(label == 'c')
+  {
+    redOn = (value == 1);
+    grnOn = (value == 1);
+    bluOn = (value == 1);
+  }
+ 
+  // Color scaling
+  if(label == 'R' || label == 'B' || label == 'G' || label == 'C')
+  {
+    value = value/100.0;
 
-      value += 10 * tens;
-      value += ones;
-
-      if(value > 99)
-        return;
-  
-      value = value/100.0;
-    }
-
-    switch (color)
+    switch (label)
     {
       case 'R' : redMult = value;
                  break;
@@ -418,3 +489,10 @@ void displayTower(const double vol, Adafruit_NeoPixel &strip)
     }
   }
   
+  Serial.write(label);
+  Serial.write(in1);
+  Serial.write(in2);
+}
+
+
+
