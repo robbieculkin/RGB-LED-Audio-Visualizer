@@ -73,6 +73,7 @@ double brtMult = 1.0;
 bool grnOn = true;
 bool bluOn = true;
 bool redOn = true;
+double eqMults [7];
 
 void setup() {
 
@@ -81,6 +82,11 @@ void setup() {
   {
     vols.addToFront(100);   //if set to 0, display would flash on. this creates a slow opening
     color.addToFront(strip1.Color(0, 0, 0));
+  }
+
+  for (int i = 0; i<7; i++)
+  {
+    eqMults[i] = 1.0;
   }
 
   Serial.begin(9600);
@@ -171,7 +177,7 @@ double getAvg(const int (&frequencies)[7])
 
   for (int k = 0; k < 7; k++)
   {
-    total += frequencies[k];
+    total += eqMults[k] * frequencies[k];
   }
 
   return ((double)total / 7);
@@ -366,7 +372,7 @@ void displayTower(const double vol, Adafruit_NeoPixel &strip)
       {
         for (j = 0; j < 10; j++)
         {
-          strip.setPixelColor(findLED(i, j), color[j + i]);
+          strip.setPixelColor(findLED(i, j), color[10 * j + i]);
         }
       }
       else                              
@@ -383,7 +389,7 @@ void displayTower(const double vol, Adafruit_NeoPixel &strip)
       {
         for (j = 0; j < 5; j++)
         {
-          strip.setPixelColor(findLED(i, j), color[(2 * j) + i]);
+          strip.setPixelColor(findLED(i, j), color[(10 * 2 * j) + i]);
         }
       }
       else
@@ -392,6 +398,25 @@ void displayTower(const double vol, Adafruit_NeoPixel &strip)
         {
           strip.setPixelColor(findLED(i, j), off);
         }
+      }
+    }
+  }
+  strip.show();
+}
+
+void displayTower2(const double vol, Adafruit_NeoPixel &strip)
+{
+  for(int i = 0; i<LEVELS; i++)
+  {
+    for(int j = 0; j < 10; i++)
+    {
+      if (i%2 == 0) //smaller rings
+      {
+        strip.setPixelColor(findLED(i, j), color[(10* 2 * j) + i]);
+      }
+      else
+      {
+        strip.setPixelColor(findLED(i, j), color[10 * j + i]);
       }
     }
   }
@@ -427,14 +452,18 @@ int findLED(int level, int place)
 void bluetoothInput()
 {
   char label = BT_Board.read();
+  char in0;
   char in1;
   char in2;
   double value = 0;
+  uint8_t index;
 
   if (isalpha(label))
   {
+    in0 = BT_Board.read();
     in1 = BT_Board.read();
     in2 = BT_Board.read();
+    index = in0 - '0';
     uint8_t tens = in1 - '0';
     uint8_t ones = in2 - '0';
     
@@ -488,8 +517,14 @@ void bluetoothInput()
                  break;
     }
   }
+
+  if(label == 'E')
+  {
+    eqMults[index] = value/50.0;
+  }
   
   Serial.write(label);
+  Serial.write(in0);
   Serial.write(in1);
   Serial.write(in2);
 }
