@@ -1,4 +1,4 @@
-//master.ino
+//wave-master.ino
 //Robbie Culkin & Daniel Barkhorn
 //for the project found at https://robbieculkin.wordpress.com/2016/08/02/rgb-led-audio-visualizer/
 
@@ -7,32 +7,25 @@
 #include "visualizer.h"
 
 // PINS & INFO
-#define BT_TX           A9
-#define BT_RX           A8
-#define STROBE           4
-#define RESET            6
-#define DC_ONE          A1
-#define DC_TWO          A2
+#define BT_TX           A2
+#define BT_RX           A1
+#define STROBE           8
+#define RESET            9
+#define MSGEQ7_IN       A0
 #define STRIP_PIN        3
-#define N_STRIP_LEDS   180
-#define TOWER_PIN        9
-#define N_TOWER_LEDS   120
-#define LEVELS          16
+#define N_STRIP_LEDS    55
 
 //SETTINGS
-#define BRIGHTNESS  255       //(0 to 255)
+#define BRIGHTNESS  100       //(0 to 255)
 #define RISE_RATE     0.13    //(0 to 1) higher values mean livelier display
 #define FALL_RATE     0.04    //(0 to 1) higher values mean livelier display
 #define CONTRAST      1.3     //(undefined range)
 #define MAX_VOL     600       //(0 to 1023) maximum value reading expected from the shield
 #define LIVELINESS    2       //(undefined range)
-#define LIVELINESS_T  1.7     //(undefined range)
-#define LIVELINESS_T2 2.0
 #define MULTIPLIER   90       //(undefined range) higher values mean fewer LEDs lit @ a given volume
 
 //NeoPixel & Bluetooth intitialization
 Adafruit_NeoPixel strip1 = Adafruit_NeoPixel(N_STRIP_LEDS, STRIP_PIN, NEO_GRB + NEO_KHZ800);
-Adafruit_NeoPixel tower  = Adafruit_NeoPixel(N_TOWER_LEDS, TOWER_PIN, NEO_GRB + NEO_KHZ800);
 SoftwareSerial BT_Board(BT_TX, BT_RX);    //TX, RX
 
 // READ
@@ -51,8 +44,6 @@ double autoMap(const double vol);
 uint32_t GetColor(byte pos, double vol);
 // finds the new color value based on color rotation position and volume
 void displayStrip(const double vol, Adafruit_NeoPixel &strip);
-// detemines what LEDs are on/off; sends RGB values to the strip
-void displayTower(const double vol, Adafruit_NeoPixel &strip);
 // detemines what LEDs are on/off; sends RGB values to the strip
 
 //HELPER FUNCTIONS
@@ -94,8 +85,7 @@ void setup() {
   //Spectrum Shield pin configurations
   pinMode(STROBE, OUTPUT);
   pinMode(RESET, OUTPUT);
-  pinMode(DC_ONE, INPUT);
-  pinMode(DC_TWO, INPUT);
+  pinMode(MSGEQ7_IN, INPUT);
   digitalWrite(STROBE, HIGH);
   digitalWrite(RESET, HIGH);
 
@@ -113,9 +103,6 @@ void setup() {
   strip1.begin();
   strip1.setBrightness(BRIGHTNESS);
   strip1.show();
-  tower.begin();
-  tower.setBrightness(BRIGHTNESS);
-  tower.show();
 }
 
 void loop() {
@@ -151,7 +138,6 @@ void loop() {
     pos += rotation;
 
   displayStrip(volume, strip1);
-  displayTower2(volume, tower);
 
 }
 
@@ -160,7 +146,7 @@ void recordFrequencies(int (&frequencies) [7])
   int band;
   for (band = 0; band < 7; band++)
   {
-    frequencies[band] = ((analogRead(DC_ONE) + analogRead(DC_TWO)) / 2);
+    frequencies[band] = analogRead(MSGEQ7_IN);
 
     if (frequencies[band] < 70) frequencies[band] = 0;
 
@@ -343,109 +329,6 @@ void displayStrip(const double vol, Adafruit_NeoPixel &strip)
     else
     {
       strip.setPixelColor(strip.numPixels() / 2 - 1 + i, off);
-    }
-  }
-  strip.show();
-}
-
-void displayTower(const double vol, Adafruit_NeoPixel &strip)
-{
-  uint32_t off = strip.Color(0, 0, 0);
-
-  double myVol = 0.4 * vol;
-  myVol = pow(myVol, LIVELINESS_T);     
-  //uses power function to scale volumes,
-  //making large volumes have greater
-  //visual effect
-
-  int i, j;
-
-  double threshold;
-  for (int i = 0;  i < LEVELS; i++)
-  {
-    threshold = (((double)(i + 1) * MULTIPLIER) - 3 * myVol + 5) * LEVELS;
-    // These magic numbers work
-    if (i % 2 == 1)                     // On a big 10 LED ring of tower
-    {
-      if (myVol > threshold)
-      {
-        for (j = 0; j < 10; j++)
-        {
-          strip.setPixelColor(findLED(i, j), color[10 * j + i]);
-        }
-      }
-      else                              
-      {
-        for (j = 0; j < 10; j++)
-        {
-          strip.setPixelColor(findLED(i, j), off);
-        }
-      }
-    }
-    else      //(i&2 == 0) on a smaller ring with 5 LEDs
-    {
-      if (myVol > threshold)
-      {
-        for (j = 0; j < 5; j++)
-        {
-          strip.setPixelColor(findLED(i, j), color[(10 * 2 * j) + i]);
-        }
-      }
-      else
-      {
-        for (j = 0; j < 5; j++)
-        {
-          strip.setPixelColor(findLED(i, j), off);
-        }
-      }
-    }
-  }
-  strip.show();
-}
-
-void displayTower2(const double vol, Adafruit_NeoPixel &strip)
-{
-  uint32_t off = strip.Color(0, 0, 0);
-  double myVol = 0.4 * vol;
-  myVol = pow(myVol, LIVELINESS_T2);
-  myVol = map(myVol, 0, MAX_VOL, 0, 255);  
-  //uses power function to scale volumes,
-  //making large volumes have greater
-  //visual effect
-
-  int i, j;
-
-  double threshold;
-  for (int i = 0;  i < LEVELS; i++)
-  {
-    threshold = (((double)(i + 1) * MULTIPLIER) - 3 * myVol + 5) * LEVELS;
-    // These magic numbers work
-    if (i % 2 == 1)                     // On a big 10 LED ring of tower
-    {
-      //if (myVol > threshold)
-      {
-        for (j = 0; j < 10; j++)
-        {
-          strip.setPixelColor(findLED(i, j), color[10 * j + i]);
-        }
-      }
-    }
-    else      //(i&2 == 0) on a smaller ring with 5 LEDs
-    {
-      //if (myVol > threshold)
-      {
-        for (j = 0; j < 5; j++)
-        {
-          strip.setPixelColor(findLED(i, j), color[0]);
-        }
-      }
-//      else
-//      {
-//        for (j = 0; j < 5; j++)
-//        {
-//          strip.setPixelColor(findLED(i, j), off);
-//        }
-//      }
     }
   }
   strip.show();
