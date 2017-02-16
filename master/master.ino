@@ -13,6 +13,7 @@
 #define RESET            6
 #define DC_ONE          A1
 #define DC_TWO          A2
+#define SENSOR_PIN      A3
 #define STRIP_PIN        3
 #define N_STRIP_LEDS   180
 #define TOWER_PIN        9
@@ -36,6 +37,7 @@ Adafruit_NeoPixel tower  = Adafruit_NeoPixel(N_TOWER_LEDS, TOWER_PIN, NEO_GRB + 
 SoftwareSerial BT_Board(BT_TX, BT_RX);    //TX, RX
 
 // READ
+void recordSoundSensor(int (&frequencies) [7]);
 void recordFrequencies(int (&frequencies) [7]);
 // records frequencies into the frequencies array
 double getAvg(const int (&frequencies) [7]);
@@ -72,6 +74,7 @@ double brtMult = 1.0;
 bool grnOn = true;
 bool bluOn = true;
 bool redOn = true;
+bool MSGEQ7On = true;
 double eqMults [7];
 
 void setup() {
@@ -130,7 +133,12 @@ void loop() {
   //
   // READ
   //
-  recordFrequencies(frequencies);
+
+  if (MSGEQ7On)
+    recordFrequencies(frequencies);
+  else
+    recordSoundSensor(frequencies);
+    
   volume = getAvg(frequencies);
 
   //
@@ -153,6 +161,29 @@ void loop() {
   displayStrip(volume, strip1);
   displayTower2(volume, tower);
 
+}
+
+void recordSoundSensor(int (&frequencies) [7])
+{
+  int total = 0;
+  const int numAvgs = 30;
+  int i;
+
+  for(i=0; i < numAvgs; i++) //take 30 readings to smooth noise
+  {
+      total+= analogRead(SENSOR_PIN);
+  }
+  double avg = ((double)total/numAvgs);
+  Serial.println(avg);
+  
+  int band;
+  for (band = 0; band < 7; band++)
+  {
+    frequencies[band] = avg*100;
+
+    //if (frequencies[band] < 70) frequencies[band] = 0;
+
+  }
 }
 
 void recordFrequencies(int (&frequencies) [7])
@@ -549,6 +580,11 @@ void bluetoothInput()
   if(label == 'E')
   {
     eqMults[index] = value/50.0;
+  }
+
+  if(label == 'M')
+  {
+    MSGEQ7On = (value == 1);
   }
   
   Serial.write(label);
