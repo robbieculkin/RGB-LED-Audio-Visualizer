@@ -14,11 +14,13 @@
 #define DC_ONE          A1
 #define DC_TWO          A2
 #define SENSOR_PIN      A3
-#define STRIP_PIN        3
+#define STRIP_PIN        3 // STRIP
 #define N_STRIP_LEDS   180
-#define TOWER_PIN        9
-#define N_TOWER_LEDS   120
+#define TOWER_PIN        9 // TOWER
+#define N_TOWER_LEDS   120 
 #define LEVELS          16
+#define CIRCLE_PIN       7 // CIRCLE
+#define N_CIRCLE_LEDS   57
 
 //SETTINGS
 #define BRIGHTNESS  255       //(0 to 255)
@@ -34,6 +36,7 @@
 //NeoPixel & Bluetooth intitialization
 Adafruit_NeoPixel strip1 = Adafruit_NeoPixel(N_STRIP_LEDS, STRIP_PIN, NEO_GRB + NEO_KHZ800);
 Adafruit_NeoPixel tower  = Adafruit_NeoPixel(N_TOWER_LEDS, TOWER_PIN, NEO_GRB + NEO_KHZ800);
+Adafruit_NeoPixel circle = Adafruit_NeoPixel(N_CIRCLE_LEDS, CIRCLE_PIN, NEO_GRB + NEO_KHZ800);
 SoftwareSerial BT_Board(BT_TX, BT_RX);    //TX, RX
 
 // READ
@@ -54,6 +57,7 @@ uint32_t GetColor(byte pos, double vol);
 // finds the new color value based on color rotation position and volume
 void displayStrip(const double vol, Adafruit_NeoPixel &strip);
 // detemines what LEDs are on/off; sends RGB values to the strip
+void displayCircle(const double vol, Adafruit_NeoPixel &strip);
 void displayTower(const double vol, Adafruit_NeoPixel &strip);
 // detemines what LEDs are on/off; sends RGB values to the strip
 
@@ -119,6 +123,9 @@ void setup() {
   tower.begin();
   tower.setBrightness(BRIGHTNESS);
   tower.show();
+  circle.begin();
+  circle.setBrightness(BRIGHTNESS);
+  circle.show();
 }
 
 void loop() {
@@ -158,6 +165,7 @@ void loop() {
   if (numLoops % 5 == 0) //default 5
     pos += rotation;
 
+  displayCircle(volume, circle);
   displayStrip(volume, strip1);
   displayTower2(volume, tower);
 
@@ -379,6 +387,23 @@ void displayStrip(const double vol, Adafruit_NeoPixel &strip)
   strip.show();
 }
 
+void displayCircle(const double vol, Adafruit_NeoPixel &strip)
+{
+
+  // some last-minute transforms I dont want to stick in the main fcn
+  double newVol = 0.5 * vol;
+  newVol = pow(newVol, LIVELINESS);
+
+  int i;
+  for (i = 0; i < strip.numPixels() / 2; i++)
+  {
+    strip.setPixelColor(strip.numPixels() / 2 - 1 - i, color[i]);
+
+    strip.setPixelColor(strip.numPixels() / 2 - 1 + i, color[i]);
+  }
+  strip.show();
+}
+
 void displayTower(const double vol, Adafruit_NeoPixel &strip)
 {
   uint32_t off = strip.Color(0, 0, 0);
@@ -587,11 +612,11 @@ void bluetoothInput()
     MSGEQ7On = (value == 1);
   }
   
-  Serial.write(label);
-  Serial.write(in0);
-  Serial.write(in1);
-  Serial.write(in2);
-  Serial.println("End BT Transmission");
+//  Serial.write(label);
+//  Serial.write(in0);
+//  Serial.write(in1);
+//  Serial.write(in2);
+//  Serial.println("End BT Transmission");
 }
 
 
