@@ -1,7 +1,9 @@
 # RGB-LED-Audio-Visualizer
 
-A lot of this code was written last year, when the extent of my C/C++ knowledge came from an intro to programming course and the Arduino starter kit. I've recently reorganized and cleaned everything up for readabilty, and I'm in the process of adding more comments. A few functions need revisions for efficiency & clarity, I'll be addressing that soon.
+This project visualizes any audio passed to it via a standard 3.5mm audio jack. See [my personal site](https://robbieculkin.wordpress.com) for videos and a tutorial. A lot of this was written in 2015, when the extent of my C/C++ knowledge came from an intro to programming course and the Arduino starter kit. In 2016 I reorganized and cleaned somethings up for readabilty.
 
-What's new: an iOS companion app that interfaces with the device via Bluetooth.
+* master: What I currently run on my display at home. Usually the most up-to-date
+* full-scale-tower-master: an adaptation of master for a commissioned 4-foot tower
+* wave-master: an adaptation of master setup to run on the BreadBro Wave
 
-Please don't copy my code without asking me first! Protected by copyright
+##### Please don't copy my code without asking me first! Protected by copyright
