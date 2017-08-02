@@ -5,5 +5,3 @@ This project visualizes any audio passed to it via a standard 3.5mm audio jack. 
 * master: What I currently run on my display at home. Usually the most up-to-date
 * full-scale-tower-master: an adaptation of master for a commissioned 4-foot tower
 * wave-master: an adaptation of master setup to run on the BreadBro Wave
-
-##### Please don't copy my code without asking me first! Protected by copyright
